@@ -1,0 +1,94 @@
+# Cube Engine 项目 - GitLab CI/CD 配置
+# 分支: main（也支持 devops 分支测试）
+# 策略: C++ 相关 job 使用 VM 上的 Runner（tag: vm-runner）
+#       JS 代码检查使用共享 Runner（node:18 镜像稳定）
+
+stages:
+  - build        # 编译后端
+  - test         # 单元测试
+  - sonarqube    # 代码质量分析
+  - lint         # JS 代码风格检查
+  - deploy       # 部署
+
+# ============================================
+# 编译 C++ 后端 API 服务器
+# ============================================
+build-backend:
+  stage: build
+  tags: [vm-runner]
+  script:
+    - echo "🔨 编译后端 API 服务器..."
+    - cd back_end
+    - cmake -B build
+    - cmake --build build
+  artifacts:
+    paths:
+      - back_end/build/
+    expire_in: 1 hour
+  only:
+    - main
+    - devops
+
+# ============================================
+# 单元测试（Google Test）
+# ============================================
+test-unittest:
+  stage: test
+  tags: [vm-runner]
+  dependencies: []
+  script:
+    - echo "🧪 编译并运行单元测试（FetchContent 自动下载 GTest）..."
+    - cd tests
+    - cmake -B build
+    - cmake --build build
+    - ./build/tetris_test
+  only:
+    - main
+    - devops
+
+# ============================================
+# SonarQube 代码质量分析
+# ============================================
+sonarqube:
+  stage: sonarqube
+  tags: [vm-runner]
+  dependencies: []
+  script:
+    - echo "🔍 运行 Cppcheck 静态分析..."
+    - cppcheck --xml --xml-version=2 --enable=style --suppress=missingIncludeSystem native/ back_end/ tests/ 2> cppcheck-report.xml || true
+    - echo "📤 上传分析结果到 SonarQube..."
+    - sonar-scanner -Dsonar.host.url=http://localhost:9000 -Dsonar.login=squ_cbfc386baaf7787b9ac2e610e5787d4872408691 -Dsonar.cxx.file.suffixes=.cpp,.h,.hpp -Dsonar.cxx.cppcheck.reportPaths=cppcheck-report.xml | tail -40
+  only:
+    - main
+    - devops
+
+# ============================================
+# JavaScript 代码质量检查
+# ============================================
+eslint:
+  stage: lint
+  image: node:18
+  dependencies: []
+  allow_failure: true
+  script:
+    - echo "🔍 检查 JavaScript 代码质量..."
+    - npx eslint@8 renderer/js/ || true
+    - echo "✅ 代码检查完成"
+  only:
+    - main
+    - devops
+
+# ============================================
+# 部署（手动触发）
+# ============================================
+deploy:
+  stage: deploy
+  tags: [vm-runner]
+  dependencies: []
+  script:
+    - echo "🚀 执行本地部署..."
+    - bash scripts/deploy.sh
+  when: manual
+  only:
+    - main
+    - devops

@@ -1,0 +1,27 @@
+name: C++ DevOps Pipeline
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: 环境检查
+      run: |
+        g++ --version
+        cmake --version
+
+    - name: CMake 配置
+      run: cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug
+
+    - name: 编译构建
+      run: cmake --build build --parallel
+
+    - name: 运行测试
+      run: ctest --test-dir build --output-on-failure

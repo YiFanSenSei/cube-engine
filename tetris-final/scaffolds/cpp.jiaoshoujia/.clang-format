@@ -1,0 +1,167 @@
+---
+# 语言: C++
+Language: Cpp
+# 访问说明符的偏移
+AccessModifierOffset: -2
+# 开括号后的对齐
+AlignAfterOpenBracket: Align
+# 连续赋值对齐
+AlignConsecutiveAssignments: true
+# 连续声明对齐
+AlignConsecutiveDeclarations: true
+# 逃脱换行对齐
+AlignEscapedNewlines: Right
+# 操作数对齐
+AlignOperands: true
+# 尾部注释对齐
+AlignTrailingComments: true
+# 函数声明参数全部放到下一行
+AllowAllParametersOfDeclarationOnNextLine: false
+# 短块同行
+AllowShortBlocksOnASingleLine: true
+# 短 case 标签同行
+AllowShortCaseLabelsOnASingleLine: true
+# 短函数同行: None, InlineOnly, Empty, Inline, All
+AllowShortFunctionsOnASingleLine: Empty
+# 短 if 同行
+AllowShortIfStatementsOnASingleLine: false
+# 短循环同行
+AllowShortLoopsOnASingleLine: false
+# 返回类型后换行(deprecated)
+AlwaysBreakAfterDefinitionReturnType: None
+# 返回类型后换行
+AlwaysBreakAfterReturnType: None
+# 多行字面量前换行
+AlwaysBreakBeforeMultilineStrings: false
+# template 声明后换行
+AlwaysBreakTemplateDeclarations: false
+# 函数实参打包
+BinPackArguments: true
+# 形参打包
+BinPackParameters: false
+# 大括号换行自定义
+BraceWrapping:
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: false
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+# 二元运算符前换行
+BreakBeforeBinaryOperators: None
+# 大括号前换行
+BreakBeforeBraces: Custom
+# 三元运算符前换行
+BreakBeforeTernaryOperators: false
+# 初始化列表逗号前换行
+BreakConstructorInitializersBeforeComma: false
+BreakConstructorInitializers: BeforeColon
+# 每行字符限制
+ColumnLimit: 100
+# 特殊注释正则
+CommentPragmas: "^ IWYU pragma:"
+# 紧凑命名空间
+CompactNamespaces: false
+# 初始化列表同行或分行
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+# 初始化列表缩进宽度
+ConstructorInitializerIndentWidth: 4
+# 延续行缩进宽度
+ContinuationIndentWidth: 4
+# C++11 列表初始化大括号空格
+Cpp11BracedListStyle: true
+# 继承指针引用对齐
+DerivePointerAlignment: false
+# 关闭格式化
+DisableFormat: false
+# 自动检测每行参数
+ExperimentalAutoDetectBinPacking: false
+# foreach 宏
+ForEachMacros: [foreach, Q_FOREACH, BOOST_FOREACH]
+# include 分类
+IncludeCategories:
+  - Regex: '^"(llvm|llvm-c|clang|clang-c)/'
+    Priority: 2
+  - Regex: '^(<|"(gtest|isl|json)/)'
+    Priority: 3
+  - Regex: ".*"
+    Priority: 1
+# 缩进 case 标签
+IndentCaseLabels: true
+# 缩进预处理指令
+IndentPPDirectives: AfterHash
+# 缩进宽度
+IndentWidth: 4
+# 函数名缩进
+IndentWrappedFunctionNames: false
+# 块开始空行保留
+KeepEmptyLinesAtTheStartOfBlocks: false
+# 块开始宏
+MacroBlockBegin: ""
+# 块结束宏
+MacroBlockEnd: ""
+# 最大连续空行
+MaxEmptyLinesToKeep: 1
+# 命名空间缩进
+NamespaceIndentation: Inner
+# ObjC 块缩进
+ObjCBlockIndentWidth: 4
+# ObjC @property 空格
+ObjCSpaceAfterProperty: false
+# ObjC protocol 空格
+ObjCSpaceBeforeProtocolList: true
+# 调用换行 penalty
+PenaltyBreakBeforeFirstCallParameter: 19
+# 注释换行 penalty
+PenaltyBreakComment: 300
+# << 前换行 penalty
+PenaltyBreakFirstLessLess: 120
+# 字符串换行 penalty
+PenaltyBreakString: 1000
+# 超字符 penalty
+PenaltyExcessCharacter: 1000000
+# 返回类型独立行 penalty
+PenaltyReturnTypeOnItsOwnLine: 60
+# 指针引用对齐
+PointerAlignment: Left
+# 允许重排注释
+ReflowComments: true
+# 允许排序 include
+SortIncludes: true
+# C 风格转换后空格
+SpaceAfterCStyleCast: false
+# template 关键字后空格
+SpaceAfterTemplateKeyword: true
+# 赋值前空格
+SpaceBeforeAssignmentOperators: true
+# 圆括号前空格
+SpaceBeforeParens: ControlStatements
+# 空括号空格
+SpaceInEmptyParentheses: false
+# 尾注前空格
+SpacesBeforeTrailingComments: 2
+# 尖括号空格
+SpacesInAngles: false
+# 容器字面量空格
+SpacesInContainerLiterals: false
+# C 风格转换括号空格
+SpacesInCStyleCastParentheses: false
+# 圆括号空格
+SpacesInParentheses: false
+# 方括号空格
+SpacesInSquareBrackets: false
+# 标准
+Standard: Cpp20
+# Tab 宽度
+TabWidth: 4
+# 使用 Tab
+UseTab: Never

@@ -1,0 +1,179 @@
+---
+- name: 部署 Cube Engine 项目到虚拟机
+  hosts: tetris_vm
+  gather_facts: yes
+  become: yes
+
+  vars:
+    deploy_path: "/opt/tetris"
+    project_name: "tetris-final"
+    project_path: "{{ deploy_path }}/{{ project_name }}"
+    backend_build_path: "{{ project_path }}/back_end/build"
+    server_port: 8080
+
+  tasks:
+    - name: 设置仓库 URL（使用 CI token 或部署令牌）
+      ansible.builtin.set_fact:
+        repo_url: "https://gitlab-ci-token:{{ gitlab_token | default('') }}@csgitlab.whu.edu.cn/2025-2026-3-devops/2025-se-152/tetris.git"
+
+    - name: 确保系统包已安装
+      ansible.builtin.apt:
+        name:
+          - git
+          - cmake
+          - build-essential
+          - python3
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: 确保部署目录存在
+      ansible.builtin.file:
+        path: "{{ deploy_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: 克隆/拉取项目代码
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ project_path }}"
+        version: main
+        force: yes
+      register: git_result
+
+    - name: 显示代码版本
+      ansible.builtin.debug:
+        msg: "代码已更新: {{ git_result.before | default('首次克隆') }} → {{ git_result.after | default('HEAD') }}"
+
+    - name: 检查 CMakeLists.txt 是否存在
+      ansible.builtin.stat:
+        path: "{{ project_path }}/back_end/CMakeLists.txt"
+      register: cmake_file
+
+    - name: CMakeLists.txt 检查
+      ansible.builtin.fail:
+        msg: "克隆失败：在 {{ project_path }}/back_end/ 下未找到 CMakeLists.txt"
+      when: not cmake_file.stat.exists
+
+    - name: 编译后端 API 服务器
+      ansible.builtin.command:
+        cmd: cmake -B build
+        chdir: "{{ project_path }}/back_end"
+      register: cmake_config
+
+    - name: 构建后端 API 服务器
+      ansible.builtin.command:
+        cmd: cmake --build build
+        chdir: "{{ project_path }}/back_end"
+      register: cmake_build
+
+    - name: 确认编译产物存在
+      ansible.builtin.stat:
+        path: "{{ backend_build_path }}/cube_server"
+      register: server_binary
+
+    - name: 编译产物检查
+      ansible.builtin.fail:
+        msg: "后端编译失败，未找到 cube_server 可执行文件"
+      when: not server_binary.stat.exists
+
+    - name: 备份旧版本二进制文件
+      ansible.builtin.copy:
+        src: "{{ backend_build_path }}/cube_server"
+        dest: "{{ backend_build_path }}/cube_server.backup"
+        remote_src: yes
+        mode: '0755'
+      ignore_errors: yes
+      register: backup_result
+
+    - name: 停止旧版服务（如果正在运行）
+      ansible.builtin.command:
+        cmd: pkill -f cube_server || true
+      ignore_errors: yes
+
+    - name: 确保日志目录存在
+      ansible.builtin.file:
+        path: /var/log/tetris
+        state: directory
+        mode: '0755'
+
+    - name: 启动 cube_server 后端服务
+      ansible.builtin.shell: |
+        nohup ./cube_server > /var/log/tetris/server.log 2>&1 &
+      args:
+        chdir: "{{ backend_build_path }}"
+      async: 1
+      poll: 0
+
+    - name: 等待服务启动
+      ansible.builtin.wait_for:
+        port: "{{ server_port }}"
+        host: "0.0.0.0"
+        delay: 3
+        timeout: 30
+
+    - name: 验证服务健康检查
+      ansible.builtin.uri:
+        url: "http://localhost:{{ server_port }}/api/health"
+        return_content: yes
+      register: health_check
+      ignore_errors: yes
+
+    - name: 健康检查通过
+      when: health_check is success and health_check.status == 200
+      ansible.builtin.debug:
+        msg: "后端 API 服务运行正常: {{ health_check.content }}"
+
+    - name: 健康检查失败 — 自动回滚
+      when: health_check is failed or health_check.status != 200
+      block:
+        - name: 显示错误信息
+          ansible.builtin.debug:
+            msg: "❌ 健康检查失败，正在回滚..."
+        - name: 检查备份是否存在
+          ansible.builtin.stat:
+            path: "{{ backend_build_path }}/cube_server.backup"
+          register: backup_file
+
+        - name: 从备份恢复
+          when: backup_file.stat.exists
+          ansible.builtin.copy:
+            src: "{{ backend_build_path }}/cube_server.backup"
+            dest: "{{ backend_build_path }}/cube_server"
+            remote_src: yes
+            mode: '0755'
+
+        - name: 重启旧版本
+          when: backup_file.stat.exists
+          ansible.builtin.shell: |
+            nohup ./cube_server > /var/log/tetris/server.log 2>&1 &
+          args:
+            chdir: "{{ backend_build_path }}"
+          async: 1
+          poll: 0
+
+        - name: 等待旧版本启动
+          when: backup_file.stat.exists
+          ansible.builtin.wait_for:
+            port: "{{ server_port }}"
+            host: "0.0.0.0"
+            delay: 3
+            timeout: 30
+
+        - name: 回滚结果
+          when: backup_file.stat.exists
+          ansible.builtin.debug:
+            msg: "🔄 已回滚到上一版本"
+
+        - name: 无可用备份 — 部署失败
+          when: not backup_file.stat.exists
+          ansible.builtin.fail:
+            msg: "部署失败且无可用备份"
+
+    - name: 部署完成信息
+      ansible.builtin.debug:
+        msg:
+          - "✅ Cube Engine 后端部署完成！"
+          - "📍 API 地址: http://{{ inventory_hostname }}:{{ server_port }}"
+          - "📋 健康检查: http://{{ inventory_hostname }}:{{ server_port }}/api/health"
+          - "📁 项目路径: {{ project_path }}"

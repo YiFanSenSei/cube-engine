@@ -1,0 +1,91 @@
+---
+- name: 本地部署测试（在虚拟机上直接运行）
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    deploy_path: "/home/ubuntu/tetris-final"
+    local_repo_path: "/home/ubuntu/tetris"
+
+  tasks:
+    - name: 从本地 git 仓库刷新代码
+      when: local_repo | default(false) | bool
+      ansible.builtin.copy:
+        src: "{{ local_repo_path }}/tetris-final/"
+        dest: "{{ deploy_path }}"
+        remote_src: yes
+        mode: '0755'
+
+    - name: 从 GitLab 克隆
+      when: gitlab_token is defined and gitlab_token | length > 0
+      ansible.builtin.git:
+        repo: "https://Jia:{{ gitlab_token }}@csgitlab.whu.edu.cn/2025-2026-3-devops/2025-se-152/tetris.git"
+        dest: "{{ deploy_path }}"
+        version: main
+        force: yes
+
+    - name: 检查代码是否存在
+      ansible.builtin.stat:
+        path: "{{ deploy_path }}/back_end/CMakeLists.txt"
+      register: code_check
+
+    - name: 代码不存在时提示
+      ansible.builtin.fail:
+        msg: "{{ deploy_path }} 下没有代码，请传 gitlab_token 或设置 local_repo=true"
+      when: not code_check.stat.exists
+
+    - name: 安装必要工具（如未安装）
+      ansible.builtin.apt:
+        name:
+          - git
+          - cmake
+          - build-essential
+          - python3
+          - curl
+        state: present
+        update_cache: no
+
+    - name: 编译后端 API 服务器
+      ansible.builtin.command:
+        cmd: cmake -B build
+        chdir: "{{ deploy_path }}/back_end"
+
+    - name: 构建后端 API 服务器
+      ansible.builtin.command:
+        cmd: cmake --build build
+        chdir: "{{ deploy_path }}/back_end"
+
+    - name: 停止旧服务
+      ansible.builtin.command:
+        cmd: pkill -f cube_server || true
+      ignore_errors: yes
+
+    - name: 确保日志目录存在
+      ansible.builtin.file:
+        path: /var/log/tetris
+        state: directory
+        mode: '0755'
+
+    - name: 启动 cube_server
+      ansible.builtin.shell: |
+        nohup ./build/cube_server > /var/log/tetris/server.log 2>&1 &
+      args:
+        chdir: "{{ deploy_path }}/back_end"
+
+    - name: 等待服务启动
+      ansible.builtin.wait_for:
+        port: 8080
+        host: "0.0.0.0"
+        delay: 2
+        timeout: 20
+
+    - name: 验证服务
+      ansible.builtin.uri:
+        url: http://localhost:8080/api/health
+        return_content: yes
+      register: health
+
+    - name: 显示结果
+      ansible.builtin.debug:
+        msg: "✅ 服务状态: {{ health.content | default('未响应') }}"

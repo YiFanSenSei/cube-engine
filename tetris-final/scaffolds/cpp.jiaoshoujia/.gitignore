@@ -1,0 +1,49 @@
+# --- 编译产物 ---
+build/
+out/
+
+# --- 可执行文件和库 ---
+*.exe
+*.dll
+*.lib
+*.a
+*.so
+*.dylib
+*.pdb
+*.ilk
+*.exp
+
+# --- 目标文件 ---
+*.o
+*.obj
+
+# --- vcpkg 安装目录 ---
+vcpkg_installed/
+
+# --- IDE 和编辑器配置 ---
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- CMake 生成文件 ---
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+**/CMakeFiles/
+
+# --- 测试数据 ---
+test_leaderboard.json
+
+# --- 运行时数据 ---
+leaderboard.json
+
+# --- 系统文件 ---
+Thumbs.db
+.DS_Store
+
+# --- 本地环境配置 ---
+.env
+*.local

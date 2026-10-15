@@ -1,0 +1,48 @@
+# CMake 最低版本要求
+cmake_minimum_required(VERSION 3.15)
+project(TetrisLeaderboardAPI_Test LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# 开启测试
+enable_testing()
+
+# --- 使用 vcpkg ---
+set(VCPKG_TARGET_TRIPLET "x64-mingw-dynamic" CACHE STRING "Vcpkg target triplet")
+
+# --- 查找 vcpkg 提供的包 ---
+find_package(GTest CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+
+# --- 收集测试源文件 ---
+file(GLOB_RECURSE TEST_SOURCES tests/*.cpp)
+
+if(NOT TEST_SOURCES)
+    message(FATAL_ERROR "没找到测试源文件，请在 tests/ 目录下添加 *_test.cpp 文件")
+endif()
+
+message(STATUS "找到测试文件: ${TEST_SOURCES}")
+
+# --- 测试可执行文件 ---
+add_executable(tetris_test ${TEST_SOURCES})
+
+# --- 链接库 ---
+target_link_libraries(tetris_test PRIVATE
+    GTest::gtest
+    GTest::gtest_main
+    nlohmann_json::nlohmann_json
+)
+
+# --- 包含路径 ---
+target_include_directories(tetris_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# --- 注册测试 ---
+add_test(NAME TetrisUnitTest COMMAND tetris_test)
+
+# --- 输出信息 ---
+message(STATUS "已配置 TetrisLeaderboardAPI 测试项目。")
+message(STATUS "使用 vcpkg triplet: ${VCPKG_TARGET_TRIPLET}")

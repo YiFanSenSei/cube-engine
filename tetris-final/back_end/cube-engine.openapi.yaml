@@ -1,0 +1,452 @@
+openapi: 3.0.1
+info:
+  title: Cube Engine API
+  description: Cube Engine 后端 RESTful API 服务
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: 本地开发服务器
+tags:
+  - name: game
+    description: 游戏操作接口
+  - name: user
+    description: 用户管理接口
+paths:
+  /api/health:
+    get:
+      summary: 健康检查
+      description: 检查 API 服务器是否正常运行
+      tags:
+        - game
+      responses:
+        '200':
+          description: 服务器正常运行
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  activeGames:
+                    type: integer
+                    description: 当前活跃游戏会话数
+              example:
+                status: ok
+                activeGames: 0
+  /api/game/init:
+    post:
+      summary: 初始化游戏
+      description: 创建新的游戏会话，返回游戏 ID 和初始状态
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isAI:
+                  type: boolean
+                  description: 是否为 AI 游戏
+                  default: false
+                difficulty:
+                  type: string
+                  enum: [easy, medium, hard]
+                  description: 游戏难度
+                  default: medium
+                buildMode:
+                  type: boolean
+                  description: 是否启用建造模式
+                  default: false
+              example:
+                isAI: false
+                difficulty: medium
+                buildMode: false
+      responses:
+        '200':
+          description: 游戏创建成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 0
+                  data:
+                    type: object
+                    properties:
+                      gameId:
+                        type: string
+                        description: 游戏会话 ID
+                      state:
+                        type: object
+                        description: 游戏初始状态
+              example:
+                code: 0
+                data:
+                  gameId: game_1
+                  state:
+                    grid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                    score: 0
+                    lines: 0
+                    level: 1
+                    gameOver: false
+                    piece: ""
+                    nextPiece: "I"
+  /api/game/move:
+    post:
+      summary: 移动方块
+      description: 移动当前方块（左/右/下）
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                  description: 游戏会话 ID
+                dx:
+                  type: integer
+                  description: 水平移动方向（-1 左, 1 右, 0 不动）
+                dy:
+                  type: integer
+                  description: 垂直移动方向（1 下）
+              example:
+                gameId: game_1
+                dx: -1
+                dy: 0
+      responses:
+        '200':
+          description: 移动结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      result:
+                        type: boolean
+                        description: 移动是否成功
+                      state:
+                        type: object
+                        description: 移动后的游戏状态
+  /api/game/rotate:
+    post:
+      summary: 旋转方块
+      description: 顺时针旋转当前方块
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                  description: 游戏会话 ID
+              example:
+                gameId: game_1
+      responses:
+        '200':
+          description: 旋转结果
+  /api/game/hardDrop:
+    post:
+      summary: 硬降
+      description: 方块直落到底
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+              example:
+                gameId: game_1
+      responses:
+        '200':
+          description: 硬降结果
+  /api/game/state:
+    post:
+      summary: 获取游戏状态
+      description: 获取当前游戏状态
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+              example:
+                gameId: game_1
+      responses:
+        '200':
+          description: 游戏状态
+  /api/game/update:
+    post:
+      summary: 更新游戏
+      description: 按时间步长更新游戏状态（下落、消行、AI 等）
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                dt:
+                  type: number
+                  description: 时间步长（毫秒）
+                  default: 16
+              example:
+                gameId: game_1
+                dt: 16
+      responses:
+        '200':
+          description: 更新后的游戏状态
+  /api/game/reset:
+    post:
+      summary: 重置游戏
+      description: 重置游戏到初始状态
+      tags:
+        - game
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+              example:
+                gameId: game_1
+      responses:
+        '200':
+          description: 重置后的游戏状态
+  /api/user/register:
+    post:
+      summary: 用户注册
+      description: 注册新用户
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: 用户名
+                password:
+                  type: string
+                  description: 密码
+              example:
+                username: testUser
+                password: '123456'
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      password:
+                        type: string
+              example:
+                code: 0
+                data:
+                  id: 1001
+                  username: testUser
+                  password: '123456'
+        '400':
+          description: 注册失败
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+              example:
+                code: 1001
+                message: 用户名已存在，请更换后重新注册
+  /api/user/login:
+    post:
+      summary: 用户登录
+      description: 用户登录，返回 token
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              example:
+                username: testUser
+                password: '123456'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      username:
+                        type: string
+                      token:
+                        type: string
+              example:
+                code: 0
+                data:
+                  id: 1001
+                  username: testUser
+                  token: token_1001_1696152000
+        '401':
+          description: 登录失败
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+              example:
+                code: 1002
+                message: 用户名或密码错误，请重试
+  /api/user/highscore:
+    post:
+      summary: 提交最高分
+      description: 提交用户的最高分
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: 用户 ID
+                score:
+                  type: integer
+                  description: 当前得分
+              example:
+                id: 1001
+                score: 800
+      responses:
+        '200':
+          description: 分数更新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      highscore:
+                        type: integer
+              example:
+                code: 0
+                data:
+                  id: 1001
+                  highscore: 950
+        '400':
+          description: 分数未超过历史最高分
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      score:
+                        type: integer
+                      highscore:
+                        type: integer
+              example:
+                code: 3001
+                message: 当前得分未超过历史最高分
+                data:
+                  id: '1001'
+                  score: 800
+                  highScore: 950
+components:
+  schemas:
+    Cube Engine 数据模型:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer

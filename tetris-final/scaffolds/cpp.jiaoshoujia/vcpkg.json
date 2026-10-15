@@ -1,0 +1,11 @@
+{
+  "name": "cpp-jiaoshoujia",
+  "version": "1.0.0",
+  "description": "A modern C++ project scaffold with CMake, vcpkg, Google Test, and more.",
+  "homepage": "https://github.com/your-username/cpp.jiaoshoujia",
+  "dependencies": [
+    "fmt",
+    "gtest",
+    "nlohmann-json"
+  ]
+}

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方块引擎 - AI对战 / 双人模式</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 底部固定提示（body 直接子级） -->
+<div class="game-footer">
+    <div class="game-footer-text">适度游戏益脑，沉迷游戏伤身。</div>
+    <div class="game-footer-version">版本号 1.001031</div>
+</div>
+<div class="game-footer-copyright">七零三制作组 权利所有 @2026</div>
+
+<!-- 启动 LOGO 画面 -->
+<div class="splash-overlay" id="splashOverlay">
+    <div class="splash-content">
+        <div class="splash-logo">
+            <span class="splash-ch">七</span>
+            <span class="splash-ch">零</span>
+            <span class="splash-ch">三</span>
+        </div>
+        <div class="splash-text">游 戏 制 作 组</div>
+        <div class="splash-sub">Cube Engine · 方块引擎</div>
+    </div>
+</div>
+
+<div class="game-wrapper">
+    <!-- 游戏内容容器 -->
+    <div class="game-content">
+    <h1><span style="font-size:32px;display:inline-block;transform:rotate(-2deg) translateY(-2px);font-family:'Microsoft YaHei',sans-serif;">方</span><span style="font-size:22px;display:inline-block;transform:rotate(3deg) translateY(3px);font-family:'Microsoft YaHei',sans-serif;">块</span><span style="font-size:28px;display:inline-block;transform:rotate(-1deg) translateY(-1px);font-family:'Microsoft YaHei',sans-serif;">引</span><span style="font-size:24px;display:inline-block;transform:rotate(2deg) translateY(2px);font-family:'Microsoft YaHei',sans-serif;">擎</span></h1>
+
+    <div class="mode-switch">
+        <button class="mode-btn active" data-mode="single" id="modeSingle">🎯 闯关模式</button>
+        <button class="mode-btn" data-mode="ai" id="modeAi">🤖 人机对战</button>
+        <button class="mode-btn" data-mode="pvp" id="modePvp">👥 双人对战</button>
+        <button class="mode-btn" data-mode="coop" id="modeCoop">🤝 双人合作</button>
+    </div>
+
+    <div class="challenge-timer" id="challengeTimer">
+        <span class="timer-icon">⏱</span>
+        <span id="challengeTimeDisplay">5:00</span>
+    </div>
+
+    <div class="build-challenge" id="buildChallenge">
+        <div class="bc-header">
+            <span class="bc-icon">🧱</span>
+            <span class="bc-label">建造模式</span>
+        </div>
+        <div class="bc-body">
+            <canvas id="bcPreview" width="100" height="100"></canvas>
+            <div class="bc-info">
+                <div class="bc-task" id="bcTask">当前任务：建一座高塔</div>
+                <div class="bc-detail">
+                    <span class="bc-reward" id="bcReward">🎁 +100</span>
+                    <span class="bc-combo" id="bcCombo">🔥 连击 x1</span>
+                    <span class="bc-count" id="bcCount">✅ 已完成 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="board-container" style="position:relative;">
+        <div class="player-section">
+            <div class="section-header">
+                <div class="player-name"><span class="dot p1"></span> <span id="p1Label">玩家</span></div>
+            </div>
+            <div class="board-inner">
+                <div class="stats-sidebar" id="playerSidebar">
+                    <div class="stat-item"><span class="stat-label">得分</span><span class="stat-value p1-score" id="playerScore">0</span></div>
+                    <div class="stat-item" id="targetStatContainer"><span class="stat-label">目标</span><span class="stat-value stage-target" id="targetScoreDisplay">0</span></div>
+                    <div class="stat-item"><span class="stat-label" id="levelLabel">等级</span><span class="stat-value" id="playerLevel">1</span></div>
+                    <div class="stat-item"><span class="stat-label">行数</span><span class="stat-value" id="playerLines">0</span></div>
+                    <div class="stat-item"><span class="stat-label">最高分</span><span class="stat-value p1-score" id="playerBest">0</span></div>
+                    <div class="next-wrap">
+                        <span class="stat-label">下一个</span>
+                        <canvas id="playerNext" width="72" height="72"></canvas>
+                    </div>
+                    <div class="sidebar-actions hidden" id="sidebarActions">
+                        <button class="sidebar-action-btn" id="achievementBtn" title="成就">🏆<span class="badge hidden">0</span></button>
+                        <button class="sidebar-action-btn" id="settingsBtn" title="设置">⏸</button>
+                    </div>
+                </div>
+                <div class="canvas-wrap" style="position:relative;">
+                    <canvas id="playerCanvas" class="game-canvas" width="240" height="480"></canvas>
+                    <canvas id="playerHudCanvas" width="340" height="480" style="position:absolute;top:0;left:0;pointer-events:none;z-index:10;background:transparent;"></canvas>
+                    <div class="overlay" id="playerOverlay"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-section">
+            <div class="section-header">
+                <div class="player-name"><span class="dot" id="p2Dot"></span> <span id="p2Label">AI</span></div>
+            </div>
+            <div class="board-inner">
+                <div class="stats-sidebar" id="aiSidebar">
+                    <div class="stat-item"><span class="stat-label">得分</span><span class="stat-value" id="p2ScoreColor"><span id="aiScore">0</span></span></div>
+                    <div class="stat-item"><span class="stat-label">行数</span><span class="stat-value" id="aiLines">0</span></div>
+                    <div class="stat-item"><span class="stat-label">等级</span><span class="stat-value" id="aiLevel">1</span></div>
+                    <div class="next-wrap">
+                        <span class="stat-label">下一个</span>
+                        <canvas id="aiNext" width="72" height="72"></canvas>
+                    </div>
+                </div>
+                <div class="canvas-wrap">
+                    <canvas id="aiCanvas" class="game-canvas" width="240" height="480"></canvas>
+                    <div class="overlay" id="aiOverlay"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="coop-section" id="coopSection">
+        <div class="section-header" style="justify-content:center;">
+            <div class="player-name"><span class="dot p1"></span> 🤝 合作模式 <span class="dot p2"></span></div>
+        </div>
+        <div class="board-inner">
+            <div class="stats-sidebar" id="coopSidebar">
+                <div class="stat-item"><span class="stat-label">👤 玩家1</span><span class="stat-value p1-score" id="coopP1Score">0</span></div>
+                <div class="stat-item"><span class="stat-label">👤 玩家2</span><span class="stat-value p2-score" id="coopP2Score">0</span></div>
+                <div class="stat-item"><span class="stat-label">总行数</span><span class="stat-value" id="coopLines">0</span></div>
+                <div class="next-wrap"><span class="stat-label">P1 下一个</span><canvas id="coopNextP1" width="72" height="72"></canvas></div>
+                <div class="next-wrap"><span class="stat-label">P2 下一个</span><canvas id="coopNextP2" width="72" height="72"></canvas></div>
+                <div class="sidebar-actions hidden" id="coopSidebarActions">
+                    <button class="sidebar-action-btn" id="coopAchievementBtn" title="成就">🏆<span class="badge hidden">0</span></button>
+                    <button class="sidebar-action-btn" id="coopSettingsBtn" title="设置">⏸</button>
+                </div>
+            </div>
+            <div class="canvas-wrap">
+                <canvas id="coopCanvas" class="game-canvas" width="480" height="480"></canvas>
+                <div class="overlay" id="coopOverlay"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls" id="gameControls">
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btnStart">开始游戏</button>
+            <button class="btn" id="btnPause" disabled>暂停</button>
+        </div>
+        <div class="difficulty-select" id="difficultySelect">
+            <span class="diff-label">🤖 AI 难度</span>
+            <button class="diff-btn" data-diff="easy">简单</button>
+            <button class="diff-btn active" data-diff="medium">中等</button>
+            <button class="diff-btn" data-diff="hard">困难</button>
+        </div>
+        <div class="key-hint" id="keyHints"></div>
+    </div>
+    </div><!-- /game-content -->
+</div>
+
+<!-- 账户选择 -->
+<div class="menu-overlay" id="accountOverlay">
+    <div class="menu-title"><span class="ch">方</span><span class="ch">块</span><span class="ch">引</span><span class="ch">擎</span></div>
+    <div class="menu-subtitle">👤 选择账户</div>
+    <div class="menu-modes" id="accountSelectList"></div>
+    <div class="menu-footer" style="margin-top:10px;">
+        <div style="display:flex;justify-content:center;gap:10px;width:320px;">
+            <input type="text" id="accountNewName" placeholder="输入新昵称创建账户..." maxlength="12" style="flex:1;padding:12px 16px;border-radius:8px;border:2px solid var(--border-color);background:var(--bg-surface);color:var(--text-primary);font-size:15px;outline:none;">
+            <button class="menu-start-btn" id="accountCreateNewBtn" style="padding:12px 24px;font-size:15px;">创建</button>
+        </div>
+    </div>
+</div>
+
+<!-- 主菜单 -->
+<div class="menu-overlay" id="menuOverlay">
+    <div class="menu-title"><span class="ch">方</span><span class="ch">块</span><span class="ch">引</span><span class="ch">擎</span></div>
+    <div class="menu-subtitle">你的每一次操作 都会得到回应</div>
+    <div class="menu-modes" id="menuModeList">
+        <button class="menu-btn active-mode" data-menu-mode="single"><span class="menu-icon">🎯</span><span class="menu-info"><span class="menu-label">闯关模式</span><div class="menu-desc">逐关挑战，达成分数目标通关</div></span><span class="menu-arrow">→</span></button>
+        <button class="menu-btn" data-menu-mode="ai"><span class="menu-icon">🤖</span><span class="menu-info"><span class="menu-label">人机对战</span><div class="menu-desc">与 AI 一决高下，可选择难度</div></span><span class="menu-arrow">→</span></button>
+        <button class="menu-btn" data-menu-mode="pvp"><span class="menu-icon">👥</span><span class="menu-info"><span class="menu-label">双人对战</span><div class="menu-desc">两名玩家在同一台电脑上对决</div></span><span class="menu-arrow">→</span></button>
+        <button class="menu-btn" data-menu-mode="challenge"><span class="menu-icon">⏱</span><span class="menu-info"><span class="menu-label">挑战模式</span><div class="menu-desc">5 分钟限时挑战，冲击排行榜</div></span><span class="menu-arrow">→</span></button>
+        <button class="menu-btn" data-menu-mode="build"><span class="menu-icon">🧱</span><span class="menu-info"><span class="menu-label">建造模式</span><div class="menu-desc">自由堆叠，完成造型挑战获得奖励</div></span><span class="menu-arrow">→</span></button>
+        <button class="menu-btn" data-menu-mode="coop"><span class="menu-icon">🤝</span><span class="menu-info"><span class="menu-label">双人合作</span><div class="menu-desc">同一棋盘各控一半，同生共死</div></span><span class="menu-arrow">→</span></button>
+    </div>
+    <div class="menu-sub" id="menuSubDifficulty">
+        <div class="menu-sub-title">选择 AI 难度</div>
+        <div class="menu-diff-options">
+            <button class="menu-diff-btn" data-diff="easy">😊 简单</button>
+            <button class="menu-diff-btn active" data-diff="medium">🤔 中等</button>
+            <button class="menu-diff-btn" data-diff="hard">😈 困难</button>
+        </div>
+        <button class="menu-back-btn" id="menuBackBtn">← 返回模式选择</button>
+    </div>
+    <div class="menu-footer">
+        <button class="menu-start-btn" id="menuStartBtn">开始游戏</button>
+        <div class="menu-extra-btns">
+            <button class="menu-extra-btn" id="menuSettingsBtn">⚙️ 设置</button>
+            <button class="menu-extra-btn" id="menuLeaderboardBtn">🏆 排行榜</button>
+            <button class="menu-extra-btn" id="menuAchievementBtn">🎖️ 成就</button>
+            <button class="menu-extra-btn" id="menuShopBtn">🏪 商城</button>
+        </div>
+    </div>
+</div>
+
+<!-- 设置面板 -->
+<div class="modal-backdrop" id="settingsBackdrop"></div>
+<div class="settings-panel" id="settingsPanel">
+    <div class="panel-header">
+        <button class="settings-close" id="settingsCloseBtn">✕</button>
+        <h2>⚙️ 设置</h2>
+    </div>
+    <div class="panel-body">
+        <div class="in-game-actions hidden" id="inGameActions">
+            <!-- 顶部空1.5个按钮高度 -->
+            <div class="in-game-spacer in-game-spacer-top"></div>
+            <div class="in-game-spacer in-game-spacer-half"></div>
+
+            <!-- "回到游戏" - 主题色强调，居中放置 -->
+            <button class="btn in-game-resume-btn" id="inGameResumeBtn">▶ 回到游戏</button>
+
+            <!-- "重新开始" -->
+            <button class="btn in-game-restart-btn" id="inGameRestartBtn">🔄 重新开始</button>
+
+            <!-- "退回标题界面" - 红色强调 -->
+            <button class="btn btn-danger in-game-back-btn" id="inGameBackMenuBtn">← 退回标题界面</button>
+
+            <!-- 底部空1.5个按钮高度 -->
+            <div class="in-game-spacer in-game-spacer-bottom"></div>
+            <div class="in-game-spacer in-game-spacer-half"></div>
+
+            <!-- 上方间距 a = 0.3 按钮高度 -->
+            <div class="in-game-spacer in-game-spacer-a"></div>
+
+            <!-- 齿轮图形按钮 -->
+            <button class="btn in-game-toggle-btn" id="inGameToggleBtn">⚙️</button>
+
+            <!-- 下方间距 b = 0.3 按钮高度 -->
+            <div class="in-game-spacer in-game-spacer-b"></div>
+        </div>
+        <div class="settings-group">
+            <div class="settings-group-title">🎨 皮肤与主题</div>
+            <div class="brightness-toggle" id="brightnessToggle">
+                <div class="toggle-switch" id="brightnessSwitch" role="button" tabindex="0" aria-label="切换暗色/亮色模式">
+                    <div class="toggle-thumb"></div>
+                    <span class="toggle-option toggle-option-dark">🌙 暗色</span>
+                    <span class="toggle-option toggle-option-light">☀️ 亮色</span>
+                </div>
+            </div>
+            <div class="settings-skin-section">
+                <div class="my-skins-tabs" id="mySkinsTabs">
+                    <button class="my-skins-tab active" data-myskins-tab="ui">🎨 UI 主题</button>
+                    <button class="my-skins-tab" data-myskins-tab="block">🧱 方块皮肤</button>
+                    <button class="my-skins-tab" data-myskins-tab="bg">🖼️ 背景</button>
+                </div>
+                <div class="my-skins-list" id="mySkinsList"></div>
+                <div class="my-skins-tip">💡 从商城购买新皮肤后会自动添加到此列表</div>
+            </div>
+        </div>
+        <div class="settings-group">
+            <div class="settings-group-title">🔊 音量</div>
+            <div class="volume-row"><span class="vol-label">音效</span><input type="range" id="sfxVolume" min="0" max="100" value="60"><span class="vol-value" id="sfxVolDisplay">60%</span></div>
+        </div>
+        <div class="settings-group">
+            <div class="settings-group-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>⌨ 按键设置</span>
+                <button class="key-reset-btn" id="keyResetBtn">重置默认</button>
+            </div>
+            <div class="keybind-list" id="keybindList"></div>
+        </div>
+        <div class="settings-group settings-group-account">
+            <div class="settings-group-title">👤 账户</div>
+            <div style="text-align:center;">
+                <div style="font-size:14px;color:var(--text-dim);margin-bottom:10px;">当前账户: <strong style="color:var(--accent-1);" id="settingsAccountName">游客</strong></div>
+                <button class="btn btn-danger" id="logoutBtn" style="padding:8px 30px;font-size:13px;">退出账户</button>
+            </div>
+        </div>
+        <div class="settings-tip">💡 提示：背景音乐在游戏中自动播放 | 点击按键后按新键即可更改</div>
+    </div>
+</div>
+
+<div class="leaderboard-overlay" id="leaderboardOverlay">
+    <div class="lb-backdrop" id="lbBackdrop"></div>
+    <div class="leaderboard-panel">
+        <div class="panel-header">
+            <button class="leaderboard-close" id="lbCloseBtn">✕</button>
+            <h2>⏱ 挑战模式排行榜</h2>
+        </div>
+        <div class="panel-body">
+            <div id="lbEntries"><div class="lb-empty">暂无记录<br>在挑战模式中取得好成绩吧！</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="achievementBackdrop"></div>
+<div class="achievement-panel" id="achievementPanel">
+    <div class="panel-header">
+        <button class="close-btn" id="achievCloseBtn">✕</button>
+        <h2>🏆 成就列表</h2>
+    </div>
+    <div class="panel-body">
+        <div class="achievement-list" id="achievementList"></div>
+        <div class="achievement-progress" id="achievementProgress">成就 0/0</div>
+    </div>
+</div>
+<div class="achievement-notification" id="achievementNotif">
+    <div class="notif-icon">🏆</div>
+    <div class="notif-text">
+        <div class="notif-label">成就解锁</div>
+        <div class="notif-name">成就名称</div>
+        <div class="notif-desc">成就描述</div>
+        <div class="notif-reward" id="notifReward"></div>
+    </div>
+</div>
+
+<!-- 通关通知（类似成就小标签） -->
+<div class="stage-notification" id="stageNotif">
+    <div class="notif-icon">🎉</div>
+    <div class="notif-text">
+        <div class="notif-label">通关成功</div>
+        <div class="notif-name">进入第 2 关</div>
+        <div class="notif-desc">目标分数: <span id="stageNotifTarget">2000</span></div>
+    </div>
+</div>
+
+<!-- 扩散圈特效图层（全窗口覆盖，body 直接子级） -->
+<canvas id="ringCanvas" class="ring-canvas"></canvas>
+
+<!-- 呼吸特效图层（全窗口覆盖，z-index 在 ringCanvas 之上、UI 之下） -->
+<canvas id="breathCanvas" class="breath-canvas"></canvas>
+
+<div class="modal-backdrop" id="shopBackdrop"></div>
+<div class="shop-panel" id="shopPanel">
+    <div class="panel-header">
+        <button class="close-btn" id="shopCloseBtn">✕</button>
+        <h2>🏪 商城</h2>
+    </div>
+    <div class="panel-body">
+        <div class="shop-currency" id="shopCurrency">
+            <span class="cur-item cur-gold">🪙 <span id="shopGold">0</span></span>
+            <span class="cur-item cur-diamond">💎 <span id="shopDiamond">0</span></span>
+        </div>
+        <div class="shop-tabs" id="shopTabs">
+            <button class="shop-tab active" data-shop-tab="blocks">🧱 方块皮肤</button>
+            <button class="shop-tab" data-shop-tab="ui">🎨 UI 皮肤</button>
+        </div>
+        <div class="shop-items" id="shopItems"></div>
+        <div class="shop-tip">购买后可在设置中切换已拥有的皮肤</div>
+    </div>
+</div>
+
+<script src="js/core/EventBus.js"></script>
+<script src="js/ScrollFadeManager.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/account.js"></script>
+<script src="js/input.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/leaderboard.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/replay.js"></script>
+<script src="js/build_mode.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/skins/SkinManager.js"></script>
+<script src="js/skins/BaseSkin.js"></script>
+<script src="js/skins/NeonSkin.js"></script>
+<script src="js/skins/CandySkin.js"></script>
+<script src="js/skins/MatrixSkin.js"></script>
+<script src="js/skins/GoldenSkin.js"></script>
+<script src="js/skins/CrystalSkin.js"></script>
+<script src="js/skins/CustomTextureSkin.js"></script>
+<script src="js/skins/SkinRegistry.js"></script>
+<script src="js/effects/HudManager.js"></script>
+<script src="js/core/RenderContext.js"></script>
+<script src="js/bg_effects.js"></script>
+<script src="js/effects/BreathEffect.js"></script>
+<script src="js/renderers/BaseGridRenderer.js"></script>
+<script src="js/renderers/NextPreviewRenderer.js"></script>
+<script src="js/renderer.js"></script>
+<script src="js/replay/ReplayRecorder.js"></script>
+<script src="js/replay/ReplayPlayer.js"></script>
+<script src="js/replay/ReplayRenderer.js"></script>
+<script src="js/replay/ReplayUI.js"></script>
+<script src="js/loop/GameLoopManager.js"></script>
+<script src="js/game_proxy.js"></script>
+<script src="js/effects/EffectListeners.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

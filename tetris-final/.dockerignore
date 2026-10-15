@@ -1,0 +1,12 @@
+.git
+.gitignore
+.gitlab-ci.yml
+node_modules/
+renderer/
+build/
+*.log
+.vscode/
+.idea/
+*.md
+docs/
+scaffolds/

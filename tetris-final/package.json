@@ -1,0 +1,56 @@
+{
+  "name": "cube-engine",
+  "version": "1.0.0",
+  "description": "方块引擎 Cube Engine - 方块对战（C++ Native Addon 引擎）",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:addon": "node-gyp rebuild",
+    "build:addon:release": "node-gyp rebuild --release",
+    "postinstall": "node-gyp rebuild",
+    "build": "electron-builder --win portable",
+    "build:installer": "electron-builder --win nsis",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "build": {
+    "appId": "com.tetris.battle.cpp",
+    "productName": "方块引擎 Cube Engine",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer/**/*",
+      "build/Release/tetris_core.node"
+    ],
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": null,
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "language": "2052",
+      "shortcutName": "方块引擎",
+      "uninstallDisplayName": "方块引擎 Cube Engine"
+    },
+    "extraResources": []
+  },
+  "dependencies": {
+    "node-addon-api": "7.1.1",
+    "pptxgenjs": "^4.0.1"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.0.0",
+    "jest": "^30.4.2",
+    "node-gyp": "10.3.1"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}

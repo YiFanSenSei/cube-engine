@@ -1,0 +1,34 @@
+stages:
+  - check
+  - build
+  - test
+  - quality
+
+env-check:
+  stage: check
+  script:
+    - g++ --version
+    - cmake --version
+    - echo "环境就绪"
+
+build:
+  stage: build
+  script:
+    - mkdir -p build && cd build
+    - cmake .. -DCMAKE_BUILD_TYPE=Release
+    - cmake --build . --parallel
+  artifacts:
+    paths:
+      - build/
+
+test:
+  stage: test
+  script:
+    - cd build
+    - ctest --output-on-failure
+
+code-quality:
+  stage: quality
+  script:
+    - echo "代码行数统计..."
+    - find . -name '*.cpp' -o -name '*.h' | xargs wc -l

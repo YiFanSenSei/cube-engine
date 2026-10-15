@@ -1,0 +1,52 @@
+# ── 依赖 ──
+node_modules/
+
+# ── 构建产物 ──
+build/
+dist/
+out/
+*.node
+*.o
+*.obj
+*.a
+*.lib
+*.exe
+*.dll
+*.so
+
+# ── 本机配置与密钥 ──
+# 严禁把真实令牌写进仓库：脚本一律从环境变量读取
+.env
+.env.*
+*.local.json
+settings.local.json
+*.pem
+*.key
+
+# ── 运行时数据 ──
+data/
+users.json
+*.log
+
+# ── 测试与覆盖率 ──
+coverage/
+tests/jmeter/results/
+*.jtl
+
+# ── IDE ──
+.idea/
+.vscode/
+*.swp
+*.swo
+*.pro.user
+*.su
+*.idb
+*.pdb
+
+# ── Office 临时文件 ──
+~$*
+
+# ── 操作系统 ──
+.DS_Store
+Thumbs.db
+desktop.ini

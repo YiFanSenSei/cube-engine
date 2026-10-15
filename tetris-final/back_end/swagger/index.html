@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cube Engine API - Swagger 测试</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+        .api-header {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #e94560;
+        }
+        .api-header h1 { font-size: 24px; color: #fff; }
+        .api-header h1 span { color: #e94560; }
+        .api-header .subtitle { color: #8899aa; font-size: 14px; }
+        .api-header .badge {
+            background: #e94560; color: #fff;
+            padding: 4px 12px; border-radius: 12px;
+            font-size: 12px; font-weight: bold;
+        }
+        .server-strip {
+            background: #0d1b2a; padding: 10px 40px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #1e3a5f; font-size: 13px;
+        }
+        .server-strip .label { color: #8899aa; }
+        .server-strip .url { color: #4fc3f7; font-family: 'Courier New', monospace; }
+        .server-strip .status-dot {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; background: #4caf50; margin-right: 6px;
+        }
+        .controls-bar {
+            background: #0d1b2a; padding: 12px 40px;
+            display: flex; align-items: center; gap: 16px;
+            border-bottom: 1px solid #1e3a5f;
+        }
+        .controls-bar button {
+            padding: 6px 16px; border: 1px solid #e94560;
+            background: transparent; color: #e94560;
+            border-radius: 4px; cursor: pointer; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .controls-bar button:hover { background: #e94560; color: #fff; }
+        .controls-bar .status-text { font-size: 13px; color: #8899aa; }
+        .controls-bar .status-text.ok { color: #4caf50; }
+        .controls-bar .status-text.err { color: #f44336; }
+        #swagger-ui { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .swagger-ui { color: #e0e0e0; }
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info { margin: 20px 0; }
+        .swagger-ui .info .title { color: #ffffff !important; font-size: 28px !important; }
+        .swagger-ui .info .description p { color: #b0b0b0 !important; }
+        .swagger-ui .scheme-container {
+            background: #16213e !important; box-shadow: none !important;
+            border: 1px solid #1e3a5f !important; border-radius: 8px !important; padding: 15px !important;
+        }
+        .swagger-ui .opblock-tag { color: #e0e0e0 !important; border-bottom: 1px solid #1e3a5f !important; }
+        .swagger-ui .opblock-tag:hover { background: rgba(233,69,96,0.05) !important; }
+        .swagger-ui .opblock {
+            border-radius: 8px !important; border: none !important;
+            margin: 0 0 12px 0 !important; box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        }
+        .swagger-ui .opblock .opblock-summary { padding: 10px 15px !important; }
+        .swagger-ui .opblock.opblock-get { background: #1a2744 !important; border-color: #61affe !important; }
+        .swagger-ui .opblock.opblock-post { background: #1a2744 !important; border-color: #49cc90 !important; }
+        .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #61affe !important; }
+        .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #49cc90 !important; }
+        .swagger-ui .opblock .opblock-summary-description { color: #b0b0b0 !important; }
+        .swagger-ui .opblock-body { background: #16213e !important; }
+        .swagger-ui .opblock-body pre { background: #0d1b2a !important; color: #e0e0e0 !important; }
+        .swagger-ui .opblock-body .btn.execute { background: #e94560 !important; border-color: #e94560 !important; }
+        .swagger-ui .opblock-body .btn.execute:hover { background: #d63851 !important; }
+        .swagger-ui select { background: #0d1b2a !important; color: #e0e0e0 !important; border: 1px solid #1e3a5f !important; }
+        .swagger-ui .model-box { background: #0d1b2a !important; }
+        .swagger-ui .model { color: #e0e0e0 !important; }
+        .swagger-ui table thead td { color: #b0b0b0 !important; }
+        .swagger-ui .response-col_status { color: #e0e0e0 !important; }
+        .swagger-ui .response-col_description { color: #b0b0b0 !important; }
+        .swagger-ui .responses-inner h4, .swagger-ui .responses-inner h5 { color: #e0e0e0 !important; }
+        .swagger-ui .parameter__name { color: #e0e0e0 !important; }
+        .swagger-ui .parameter__type { color: #8899aa !important; }
+        .swagger-ui .parameter__in { color: #8899aa !important; }
+        .swagger-ui .parameters-col_description input,
+        .swagger-ui .parameters-col_description textarea {
+            background: #0d1b2a !important; color: #e0e0e0 !important; border: 1px solid #1e3a5f !important;
+        }
+        .swagger-ui .btn { border-radius: 4px !important; }
+        .swagger-ui .response-controls { display: none; }
+        .api-footer {
+            text-align: center; padding: 20px; color: #667788;
+            font-size: 12px; border-top: 1px solid #1e3a5f; margin-top: 40px;
+        }
+        .api-footer a { color: #4fc3f7; text-decoration: none; }
+        .swagger-ui .loading-container { padding: 40px; }
+        .swagger-ui .loading-container .loading { color: #8899aa; }
+    </style>
+</head>
+<body>
+
+<div class="api-header">
+    <div>
+        <h1>🎮 <span>方块引擎 Cube Engine</span> API 测试台</h1>
+        <div class="subtitle">基于 Swagger UI · 交互式 RESTful API 调试</div>
+    </div>
+    <div><span class="badge">v1.0.0</span></div>
+</div>
+
+<div class="server-strip">
+    <span class="label">🔗 服务器：</span>
+    <span class="url" id="serverUrl">http://localhost:8080</span>
+    <span class="label" style="margin-left:20px;">状态：</span>
+    <span id="healthStatus"><span class="status-dot" style="background:#666;"></span>检测中...</span>
+</div>
+
+<div class="controls-bar">
+    <button onclick="checkHealth()">🔄 刷新状态</button>
+    <button onclick="localStorage.clear(); location.reload();">🗑️ 清除缓存</button>
+    <span id="healthText" class="status-text">点击刷新检查服务器状态</span>
+</div>
+
+<div id="swagger-ui"></div>
+
+<div class="api-footer">
+    Cube Engine 项目 · 后端 API 服务 ·
+    <a href="../cube-engine.openapi.yaml" target="_blank">📄 OpenAPI 规范</a> ·
+    <a href="../../tests/jmeter/TetrisAPI_LoadTest.jmx" target="_blank">⚡ JMeter 测试脚本</a>
+</div>
+
+<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+async function checkHealth() {
+    const el = document.getElementById('healthStatus');
+    const text = document.getElementById('healthText');
+    const url = document.getElementById('serverUrl').textContent;
+    el.innerHTML = '<span class="status-dot" style="background:#ff9800;"></span>检测中...';
+    text.textContent = '正在连接服务器...';
+    text.className = 'status-text';
+    try {
+        const res = await fetch(url + '/api/health', { method: 'GET', signal: AbortSignal.timeout(3000) });
+        const data = await res.json();
+        if (data.status === 'ok') {
+            el.innerHTML = '<span class="status-dot"></span> 在线 (活跃游戏: ' + (data.activeGames || 0) + ')';
+            text.textContent = '✅ 服务器运行正常';
+            text.className = 'status-text ok';
+        } else {
+            el.innerHTML = '<span class="status-dot" style="background:#ff9800;"></span>异常';
+            text.textContent = '⚠️ 服务器响应异常: ' + JSON.stringify(data);
+            text.className = 'status-text err';
+        }
+    } catch (err) {
+        el.innerHTML = '<span class="status-dot" style="background:#f44336;"></span>离线';
+        text.textContent = '❌ 无法连接: ' + err.message;
+        text.className = 'status-text err';
+    }
+}
+
+window.onload = function() {
+    const baseUrl = window.location.protocol + '//' + window.location.hostname + ':8080';
+    document.getElementById('serverUrl').textContent = baseUrl;
+    SwaggerUIBundle({
+        url: '../cube-engine.openapi.yaml',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        displayRequestDuration: true,
+        presets: [ SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset ],
+        plugins: [ SwaggerUIBundle.plugins.DownloadUrl ],
+        layout: "BaseLayout",
+        docExpansion: "list",
+        defaultModelsExpandDepth: -1,
+        tryItOutEnabled: true,
+        requestInterceptor: function(req) {
+            if (!req.url.startsWith('http')) req.url = baseUrl + req.url;
+            return req;
+        }
+    });
+    setTimeout(checkHealth, 1000);
+};
+</script>
+</body>
+</html>

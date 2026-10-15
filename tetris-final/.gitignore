@@ -1,0 +1,40 @@
+node_modules/
+build/
+dist/
+*.node
+*.log
+.env
+
+# 本地数据
+/data/
+
+# C++ 构建输出
+back_end/build/
+tests/build*/
+*.o
+*.obj
+*.exe
+*.a
+*.lib
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 运行时数据
+users.json
+
+# 测试覆盖率输出
+coverage/
+
+# JMeter 测试结果
+tests/jmeter/results/
+*.jtl
+
+# Qt Creator 文件
+*.pro.user
+
+# Office 临时文件
+~$*
